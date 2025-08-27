@@ -1,25 +1,28 @@
-import { getNodes, getDelays, switchGroup, getTraffic, getMemory, getVersion } from './api'
+import { getNodes, getDelays, switchGroup, getTraffic } from './api'
 import { createSignal, onMount } from 'solid-js'
 import { effect } from 'solid-js/web'
 export default function Proxys() {
   const [current, setCurrent] = createSignal<string>()
   const [proxys, setProxys] = createSignal<string[]>([])
   const [delays, setDelays] = createSignal<(number | null)[]>([])
-  const [traffic, setTraffic] = createSignal<string>()
-  const [memory, setMemory] = createSignal<string>()
-  const [version, setVersion] = createSignal<string>()
+  const [traffic, setTraffic] = createSignal({ up: 0, down: 0 })
+
+  onMount(() => {
+    getTraffic((line) => {
+      try {
+        const obj = JSON.parse(line) // 解析 JSON
+        setTraffic(obj)              // 更新 signal
+      } catch (e) {
+        console.error("JSON 解析失败:", line)
+      }
+    })
+  })
 
   onMount(async () => {
-    try {
-      const version = await getVersion()
-      setVersion(version.version)
-      const proxys = await getNodes()
-      setProxys(proxys.all)
-      const delays = await getDelays(proxys.all)
-      setDelays(delays)
-    } catch (err) {
-      console.error(err)
-    }
+    const proxys = await getNodes()
+    setProxys(proxys.all)
+    const delays = await getDelays(proxys.all)
+    setDelays(delays)
   })
 
   effect(async () => {
@@ -32,17 +35,16 @@ export default function Proxys() {
     setCurrent(proxy)
   }
 
-  return <div class='flex flex-col items-center gap-3 p-3 bg-base-100 h-screen'>
-    <div class='flex gap-3'>
-      <span>traffic</span>
-      <span>memory</span>
-      <span onClick={e => e}>connect</span>
+  return <div class='flex flex-col justify-center items-center gap-3 p-3 h-dvh'>
+    <div class='flex gap-11 text-lg p-3'>
+      <span>↑ {(traffic()?.up / 1024).toFixed(2)} k/s</span>
+      <span>↓ {(traffic()?.down / 1024).toFixed(2)} k/s</span>
     </div>
-    <div class='grid grid-cols-3 items-center gap-6 h-full'>
+    <div class='grid sm:grid-cols-3 place-items-center gap-6'>
       {proxys().map((proxy, i) => {
         return <div class='flex flex-col items-center gap-3' >
           <button
-            class={`btn btn-base-content btn-lg rounded-full ${proxy === current() ? 'btn-primary' : ''}`}
+            class={`btn btn-lg rounded-full ${proxy === current() ? 'btn-primary' : ''}`}
             onClick={() => changeProxy(proxy)}
           >
             {proxy}

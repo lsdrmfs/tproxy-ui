@@ -1,0 +1,28 @@
+{
+  "experimental":{"clash_api":{
+      "external_ui_download_url":"https://github.com/user-attachments/files/21977499/ui.zip",
+      "external_ui":"/etc/xd","external_controller":"[::]:99"}},"log":{"level":"warn"},
+  "dns":{
+    "servers":[
+      {"tag":"LOCAL","type":"tls","server":"223.6.6.6","detour":"DIRECT"},
+      {"tag":"PROXY","type":"tls","server":"1.1.1.1","detour":"GLOBAL"}
+    ],"rules":[{"rule_set":"geos","server":"LOCAL"}],"final":"PROXY"
+ },
+  "inbounds":[
+    {"tag":"t","type":"tproxy","listen":"::","listen_port":88,"udp_timeout":"3s"},
+    {"tag":"s","type":"socks","listen":"::","listen_port":77,"udp_timeout":"3s"}
+  ],
+  "outbounds":[
+    {"tag":"ANYTLS","type":"anytls","server":"","server_port":443,"tls":{"enabled":true,"server_name":"amd.com","utls":{"enabled":true},"reality":{"enabled":true,"public_key":"u4v3a_-uhIXPE2RoGaNy9_W5EK5UYV_hVN4Vpei75lM"}}},
+    {"tag":"TROJAN","type":"trojan","server":"","server_port":443,"password":"4A2DE7F5-B72E-D34C-83FE-EA5051E17E05","tls":{"enabled":true,"insecure":true,"server_name":"cos.ap-guangzhou.myqcloud.com"}},
+    {"tag":"DIRECT","type":"direct","domain_resolver":"LOCAL"},{"tag":"GLOBAL","type":"selector","outbounds":["ANYTLS","TROJAN","DIRECT"]}
+  ],
+  "route":{"rules":[
+      {"inbound":"t","action":"sniff"},{"protocol":"dns","action":"hijack-dns"},
+      {"rule_set":"geo","outbound":"DIRECT"},{"inbound":"s","outbound":"DIRECT"}
+    ],
+    "rule_set":[
+      {"tag":"geos","type":"remote","format":"binary","url":"https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo-lite/geosite/cn.srs"},
+      {"tag":"geo","type":"remote","format":"binary","url":"https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo-lite/geoip/cn.srs"}
+  ],"default_domain_resolver":"LOCAL","final":"GLOBAL"}
+}
