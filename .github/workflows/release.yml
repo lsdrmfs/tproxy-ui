@@ -1,54 +1,33 @@
 name: Release
 
-on:
-  push:
-    branches:
-      - main
+on: push
+
+permissions:
+  contents: write
+  discussions: write
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: Determine next version
-        id: version
+      - name: Build
         run: |
-          LATEST_TAG=$(git tag --list "v*.*" --sort=-v:refname | head -n1)
-          if [ -z "$LATEST_TAG" ]; then
-            VERSION="v1.0"
-          else
-            MAJOR=${LATEST_TAG%%.*}
-            MINOR=${LATEST_TAG#*.}
-            MINOR_NUM=$((10#$MINOR))
-            if [ $MINOR_NUM -lt 9 ]; then
-              MINOR_NUM=$((MINOR_NUM + 1))
-              VERSION="$MAJOR.$MINOR_NUM"
-            else
-              MAJOR_NUM=${MAJOR#v}
-              MAJOR_NUM=$((MAJOR_NUM + 1))
-              VERSION="v$MAJOR_NUM.0"
-            fi
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          npm install
+          npm run build
 
-      - name: Create tag & release
-        id: create_release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
-          body: "Release ${{ env.VERSION }}"
-
-      - name: Package release
+      - name: Zip
         run: |
-          mkdir -p release
-          zip -r release/ui.zip . -x "*.git*" -x "*.github*" -x "*.log"
+          cd dist
+          zip -r ../ui.zip ./*
 
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
+      - name: Test
+        run: cat ui.zip
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/ui.zip
-          asset_name: ui.zip
-          asset_content_type: application/zip
+          files: ui.zip
