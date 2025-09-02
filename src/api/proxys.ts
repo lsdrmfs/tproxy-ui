@@ -1,5 +1,5 @@
-const BASE = 'http://localhost:99'
-const SECRET = 'secret'
+const BASE = import.meta.env.VITE_BASE
+const SECRET = import.meta.env.VITE_SECRET
 
 export interface SelectorData {
     name: string

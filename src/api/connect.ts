@@ -1,5 +1,5 @@
-const BASE = 'http://localhost:99'
-const SECRET = 'secret'
+const BASE = import.meta.env.VITE_BASE
+const SECRET = import.meta.env.VITE_SECRET
 
 export function wsConnections(onMessage: (data: any) => void, interval = 1) {
     const url = `${BASE.replace(/^http/, "ws")}/connections?interval=${interval}&token=${SECRET}`
