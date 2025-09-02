@@ -1,4 +1,4 @@
-const BASE = 'http://localhost:99'
+const BASE = 'http://10.1.1.1:99'
 const SECRET = 'secret'
 
 export async function getTraffic(onLine) {
