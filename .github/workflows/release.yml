@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Version
+        id: version
+        run: |
+          LATEST_TAG=$(git tag --list "v*.*" --sort=-v:refname | head -n1)
+
+          if [ -z "$LATEST_TAG" ]; then
+            VERSION="v1.0"
+          else
+            MAJOR=${LATEST_TAG%%.*}
+            MINOR=${LATEST_TAG#*.} 
+            MINOR_NUM=$((10#$MINOR))
+
+            if [ $MINOR_NUM -lt 9 ]; then
+              MINOR_NUM=$((MINOR_NUM + 1))
+              VERSION="$MAJOR.$MINOR_NUM"
+            else
+              MAJOR_NUM=${MAJOR#v}
+              MAJOR_NUM=$((MAJOR_NUM + 1))
+              VERSION="v$MAJOR_NUM.0"
+            fi
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Next version: $VERSION"
+
+      - name: Tag
+        run: |
+          git config user.name "lsdrmfs"
+          git config user.email "lsdrmfs@gmail.com"
+          git tag ${{ env.VERSION }}
+          git push origin ${{ env.VERSION }}
+
+      - name: Package
+        run: |
+          mkdir -p release
+          zip -r release/ui.zip . -x "*.git*" -x "*.github*" -x "*.log"
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/ui.zip
+          tag_name: ${{ env.VERSION }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
