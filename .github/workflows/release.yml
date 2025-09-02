@@ -39,8 +39,6 @@ jobs:
           tag_name: ${{ env.VERSION }}
           release_name: ${{ env.VERSION }}
           body: "Release ${{ env.VERSION }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.Tokens }}
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
