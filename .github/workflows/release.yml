@@ -39,8 +39,6 @@ jobs:
           tag_name: ${{ env.VERSION }}
           release_name: ${{ env.VERSION }}
           body: "Release ${{ env.VERSION }}"
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Package release
         run: |
