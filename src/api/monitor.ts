@@ -1,25 +1,25 @@
-const BASE = import.meta.env.VITE_BASE;
-const SECRET = import.meta.env.VITE_SECRET;
+const BASE = 'http://localhost:99'
+const SECRET = 'secret'
 
 export async function getTraffic(onLine) {
   const res = await fetch(`${BASE}/traffic`, {
     headers: { Authorization: `Bearer ${SECRET}` },
-  });
+  })
 
-  const decoder = new TextDecoder();
-  let buffer = "";
+  const decoder = new TextDecoder()
+  let buffer = ""
 
   for await (const chunk of res.body) {
-    buffer += decoder.decode(chunk, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop();
+    buffer += decoder.decode(chunk, { stream: true })
+    const lines = buffer.split("\n")
+    buffer = lines.pop()
 
     lines.forEach((line) => {
-      if (line.trim()) onLine?.(line);
-    });
+      if (line.trim()) onLine?.(line)
+    })
   }
 
-  if (buffer.trim()) onLine?.(buffer);
+  if (buffer.trim()) onLine?.(buffer)
 }
 
 export async function getVersion() {
