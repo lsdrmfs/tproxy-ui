@@ -12,18 +12,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Version
+      - name: Determine next version
         id: version
         run: |
           LATEST_TAG=$(git tag --list "v*.*" --sort=-v:refname | head -n1)
-
           if [ -z "$LATEST_TAG" ]; then
             VERSION="v1.0"
           else
             MAJOR=${LATEST_TAG%%.*}
-            MINOR=${LATEST_TAG#*.} 
+            MINOR=${LATEST_TAG#*.}
             MINOR_NUM=$((10#$MINOR))
-
             if [ $MINOR_NUM -lt 9 ]; then
               MINOR_NUM=$((MINOR_NUM + 1))
               VERSION="$MAJOR.$MINOR_NUM"
@@ -34,24 +32,25 @@ jobs:
             fi
           fi
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Next version: $VERSION"
 
-      - name: Tag
-        run: |
-          git config user.name "lsdrmfs"
-          git config user.email "lsdrmfs@gmail.com"
-          git tag ${{ env.VERSION }}
-          git push origin ${{ env.VERSION }}
+      - name: Create tag & release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+          body: "Release ${{ env.VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Package
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release/ui.zip
+          asset_name: ui.zip
+          asset_content_type: application/zip
+
+      - name: Package release
         run: |
           mkdir -p release
           zip -r release/ui.zip . -x "*.git*" -x "*.github*" -x "*.log"
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: release/ui.zip
-          tag_name: ${{ env.VERSION }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
